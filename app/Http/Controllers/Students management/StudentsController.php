@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Students management;
 
 use App\Models\Designation;
 use App\Models\Students;

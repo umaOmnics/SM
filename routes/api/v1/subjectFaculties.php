@@ -1,6 +1,7 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\SubjectFacultiesController;
+use management\SubjectFacultiesController;
 
 Route::group(['prefix' => 'v1/subjectFaculties'], function () {
 

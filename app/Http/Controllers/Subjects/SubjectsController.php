@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Subjects;
 
-use App\Models\Designation;
-use App\Models\StudentGrades;
+use App\Http\Controllers\Controller;
+use App\Models\Subjects;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Exception;
-class StudentGradesController extends Controller
+
+class SubjectsController extends Controller
 {
     /**
      * Method allow to display list of all designations or single academic_name.
@@ -20,7 +20,7 @@ class StudentGradesController extends Controller
     public function index()
     {
         try {
-            $details = StudentGrades::orderBy('id','DESC')->get();
+            $details = Subjects::orderBy('id','DESC')->get();
             return response()->json([
                 'data' => $details,
                 'message' => 'Success',
@@ -44,10 +44,9 @@ class StudentGradesController extends Controller
     public function store(Request $request)
     {
         try {
-             StudentGrades::insertGetId([
-                'student_id' => $request->student_id,
-                'academic_year' => $request->academic_year,
-                'year' => $request->year,
+            Subjects::insertGetId([
+                'name' => $request->name,
+                'code' => $request->code,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
 
@@ -74,9 +73,8 @@ class StudentGradesController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (StudentGrades::where('id',$id)->exists()){
-                $details = StudentGrades::where('id',$id)->first();
-                // $query = $this->getMasterDataDetailsOverview($designation);
+            if (Subjects::where('id',$id)->exists()){
+                $details = Subjects::where('id',$id)->first();
                 return response()->json([
                     'data' => $details,
                     'message' => 'Success',
@@ -108,7 +106,7 @@ class StudentGradesController extends Controller
     {
         try {
             // Find the academic name by ID
-            $details = StudentGrades::find($id);
+            $details = Subjects::find($id);
 
             if (!$details) {
                 return response()->json([
@@ -118,15 +116,14 @@ class StudentGradesController extends Controller
             }
 
             // Update the academic name and save
-            $details->student_id = $request->student_id;
-            $details->academic_year = $request->academic_year;
-            $details->grade = $request->grade;
+            $details->name = $request->name;
+            $details->code = $request->code;
             $details->updated_at = Carbon::now()->format('Y-m-d H:i:s');
             $details->save();
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'Grades are updated successfully',
+                'message' => 'Subjects are updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -151,12 +148,12 @@ class StudentGradesController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (StudentGrades::where('id',$id)->exists()){
-                StudentGrades::where('id',$id)->delete();
+            if (Subjects::where('id',$id)->exists()){
+                Subjects::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The grade is deleted successfully',
+                    'message' => 'The subjects is deleted successfully',
                 ],200);
 
             }else{
@@ -183,15 +180,15 @@ class StudentGradesController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->grade_ids)) {
-                foreach ($request->grade_ids as $grade_id) {
-                    $details = StudentGrades::findOrFail($grade_id);
+            if (!empty($request->subject_ids)) {
+                foreach ($request->subject_ids as $subject_id) {
+                    $details = Subjects::findOrFail($subject_id);
                     $details->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The grades are deleted successfully',
+                    'message' => 'The subjects are deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
@@ -208,5 +205,4 @@ class StudentGradesController extends Controller
             ], 500);
         }
     } // End Function
-
 }

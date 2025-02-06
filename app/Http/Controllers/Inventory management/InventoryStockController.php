@@ -1,27 +1,35 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Items;
 
-use App\Models\Announcements;
-use App\Models\ClassTimeTable;
+use App\Http\Controllers\Controller;
+use App\Models\InventoryStock;
+use App\Models\Vendor;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Exception;
-class ClassTimeTableController extends Controller
+
+class InventoryStockController extends Controller
 {
     /**
-     * Method allow to display list of all designations or single academic_name.
+     * Method allow to display list of all Inventory stock.
      * @return JsonResponse
      * @throws Exception
      */
-    public function index():JsonResponse
+    public function index(): JsonResponse
     {
         try {
-            $details = ClassTimeTable::orderBy('id','DESC')->get();
+            $inventory_stocks = InventoryStock::orderBy('id','DESC')->get();
+            $inventory_stock_details = [];
+            foreach($inventory_stocks as $inventory_stock){
+                $inventory_stock_details[] = $this->inventoryStockOverview($inventory_stock);
+            }
+
             return response()->json([
-                'data' => $details,
+                'data' => $inventory_stock_details,
                 'message' => 'Success',
             ], 200);
 
@@ -35,26 +43,29 @@ class ClassTimeTableController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store inventory stock.
      * @param Request $request
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         try {
-            ClassTimeTable::insertGetId([
-                'name' => $request->name,
-                'session_name' => $request->session_name,
-                'start_time' => $request->start_time,
-                'end_time' => $request->end_time,
-                'is_break' => $request->is_break,
+            $request->validate([
+                'item_id' => 'required|int',
+                'total_stock' => 'required|int',
+            ]);
+            $inventory_stock_id = InventoryStock::insertGetId([
+                'item_id' => $request->name,
+                'total_stock' => $request->total_stock,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
-
+            $inventory_stock = InventoryStock::where('id',$inventory_stock_id)->first();
+            $inventory_stock_details = $this->inventoryStockOverview($inventory_stock);
             return response()->json([
+                'data' => $inventory_stock_details,
                 'status' => 'Success',
-                'message' => 'class time tables is added successfully',
+                'message' => 'Item added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -67,7 +78,27 @@ class ClassTimeTableController extends Controller
     } // End Function
 
     /**
-     * Method allow to delete the particular academic_name.
+     * Method allow to show all the inventoryStockOverview.
+     * @param $inventory_stock
+     * @return JsonResponse|array
+     */
+    public function inventoryStockOverview($inventory_stock): JsonResponse|array
+    {
+        $inventory_stock_array = [];
+        if(!empty($inventory_stock)){
+            $inventory_stock_array = [
+                'id' => $inventory_stock->id,
+                'item_id' => $inventory_stock->item_id,
+                'total_stock' => $inventory_stock->total_stock,
+                'created_at' => $inventory_stock->created_at,
+                'updated_at' => $inventory_stock->updated_at
+            ];
+        }
+        return $inventory_stock_array;
+    }
+
+    /**
+     * Method allow to show the item details.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -75,10 +106,11 @@ class ClassTimeTableController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (ClassTimeTable::where('id',$id)->exists()){
-                $details = ClassTimeTable::where('id',$id)->first();
+            if (InventoryStock::where('id',$id)->exists()){
+                $inventory_stock = InventoryStock::where('id',$id)->first();
+                $query = $this->inventoryStockOverview($inventory_stock);
                 return response()->json([
-                    'data' => $details,
+                    'data' => $query,
                     'message' => 'Success',
                 ],200);
 
@@ -98,7 +130,7 @@ class ClassTimeTableController extends Controller
     } // End Function
 
     /**
-     * Method allow to update the name of the particular academic_name.
+     * Method allow to update inventory_stock.
      * @param Request $request
      * @param $id
      * @return JsonResponse
@@ -107,28 +139,34 @@ class ClassTimeTableController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            // Find the academic name by ID
-            $details = ClassTimeTable::find($id);
+            $inventory_stock = InventoryStock::find($id);
 
-            if (!$details) {
+            if (!$inventory_stock) {
                 return response()->json([
                     'status' => 'No Content',
                     'message' => 'There is no relevant information for the selected query',
                 ], 404);
             }
 
+            // Validate the request
+            $request->validate([
+                'item_id' => 'required|int',
+                'total_stock' => 'required|int',
+            ]);
+
             // Update the academic name and save
-            $details->name = $request->name;
-            $details->session_name = $request->session_name;
-            $details->start_time = $request->start_time;
-            $details->end_time = $request->end_time;
-            $details->is_break = $request->is_break;
-            $details->updated_at = Carbon::now()->format('Y-m-d H:i:s');
-            $details->save();
+            $inventory_stock->item_id = $request->item_id;
+            $inventory_stock->total_stock = $request->total_stock;
+            $inventory_stock->updated_at = Carbon::now()->format('Y-m-d H:i:s');
+            if($inventory_stock->save()){
+                $updated_inventory_stock = InventoryStock::where('id',$id)->first();
+                $updated_inventory_stock_details = $this->inventoryStockOverview($updated_inventory_stock);
+            }
 
             return response()->json([
+                'data' => $updated_inventory_stock_details,
                 'status' => 'Success',
-                'message' => 'class time tables has updated successfully',
+                'message' => 'The vendor updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -138,14 +176,14 @@ class ClassTimeTableController extends Controller
         } catch (\Exception $exception) {
             return response()->json([
                 'status' => 'Error',
-                'message' => 'An error occurred while updating the name.',
+                'message' => 'An error occurred while updating the item.',
             ], 500);
         }
     } // End Function
 
 
     /**
-     * Method allow to soft delete the particular name.
+     * Method allow to soft delete the particular vendor.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -153,12 +191,12 @@ class ClassTimeTableController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (ClassTimeTable::where('id',$id)->exists()){
-                ClassTimeTable::where('id',$id)->delete();
+            if (InventoryStock::where('id',$id)->exists()){
+                InventoryStock::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The class time tables is deleted successfully',
+                    'message' => 'The Inventory Stock deleted successfully',
                 ],200);
 
             }else{
@@ -177,7 +215,7 @@ class ClassTimeTableController extends Controller
     } // End Function
 
     /**
-     * Method allow to soft delete the set of designations.
+     * Method allow to soft delete the set of InventoryStock.
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
@@ -185,20 +223,20 @@ class ClassTimeTableController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->time_table_ids)) {
-                foreach ($request->time_table_ids as $time_table_id) {
-                    $details = ClassTimeTable::findOrFail($time_table_id);
-                    $details->delete();
+            if (!empty($request->inventory_stock_id)) {
+                foreach ($request->inventory_stock_id as $inventory_stock_id) {
+                    $inventory_stock = InventoryStock::findOrFail($inventory_stock_id);
+                    $inventory_stock->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The class time tables are deleted successfully',
+                    'message' => 'The Inventory Stock deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
                     'status' => 'Error',
-                    'message' => 'Please select at least one name to delete'
+                    'message' => 'Please select at least one vendor to delete'
                 ], 422);
             }
 
@@ -210,4 +248,5 @@ class ClassTimeTableController extends Controller
             ], 500);
         }
     } // End Function
+
 }

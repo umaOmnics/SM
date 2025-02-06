@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Employee management;
 
 use App\Models\Designation;
 use App\Models\Employees;

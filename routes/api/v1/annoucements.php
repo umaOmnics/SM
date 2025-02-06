@@ -1,6 +1,7 @@
 <?php
+
+use App\Http\Controllers\Subjects\AnnouncementsController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AnnouncementsController;
 
 Route::group(['prefix' => 'v1/announcements'], function () {
 

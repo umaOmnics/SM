@@ -1,6 +1,7 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EmployeeAttendenceController;
+use management\EmployeeAttendenceController;
 
 Route::group(['prefix' => 'v1/employeeAttendence'], function () {
 

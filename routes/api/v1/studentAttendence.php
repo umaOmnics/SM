@@ -1,6 +1,7 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StudentAttendenceController;
+use management\StudentAttendenceController;
 
 Route::group(['prefix' => 'v1/studentAttendence'], function () {
 

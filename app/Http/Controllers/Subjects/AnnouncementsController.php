@@ -1,25 +1,26 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Subjects;
 
-use App\Models\SubjectFaculties;
-use App\Models\Subjects;
+use App\Http\Controllers\Controller;
+use App\Models\Announcements;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Exception;
-class SubjectFacultiesController extends Controller
+
+class AnnouncementsController extends Controller
 {
     /**
      * Method allow to display list of all designations or single academic_name.
      * @return JsonResponse
      * @throws Exception
      */
-    public function index()
+    public function index():JsonResponse
     {
         try {
-            $details = SubjectFaculties::orderBy('id','DESC')->get();
+            $details = Announcements::orderBy('id','DESC')->get();
             return response()->json([
                 'data' => $details,
                 'message' => 'Success',
@@ -43,16 +44,16 @@ class SubjectFacultiesController extends Controller
     public function store(Request $request)
     {
         try {
-            SubjectFaculties::insertGetId([
-                'emp_id' => $request->emp_id,
-                'subject_id' => $request->subject_id,
-                'classes_allocated' => $request->classes_allocated,
+            Announcements::insertGetId([
+                'to' => $request->to,
+                'subject' => $request->subject,
+                'message' => $request->message,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'subject faculties is added successfully',
+                'message' => 'Name is added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -73,8 +74,8 @@ class SubjectFacultiesController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (SubjectFaculties::where('id',$id)->exists()){
-                $details = SubjectFaculties::where('id',$id)->first();
+            if (Announcements::where('id',$id)->exists()){
+                $details = Announcements::where('id',$id)->first();
                 return response()->json([
                     'data' => $details,
                     'message' => 'Success',
@@ -106,7 +107,7 @@ class SubjectFacultiesController extends Controller
     {
         try {
             // Find the academic name by ID
-            $details = SubjectFaculties::find($id);
+            $details = Announcements::find($id);
 
             if (!$details) {
                 return response()->json([
@@ -116,15 +117,15 @@ class SubjectFacultiesController extends Controller
             }
 
             // Update the academic name and save
-            $details->emp_id = $request->emp_id;
-            $details->subject_id = $request->subject_id;
-            $details->classes_allocated = $request->classes_allocated;
+            $details->to = $request->to;
+            $details->subject = $request->subject;
+            $details->message = $request->message;
             $details->updated_at = Carbon::now()->format('Y-m-d H:i:s');
             $details->save();
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'Subjects faculties are updated successfully',
+                'message' => 'employee attendence has updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -149,12 +150,12 @@ class SubjectFacultiesController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (SubjectFaculties::where('id',$id)->exists()){
-                SubjectFaculties::where('id',$id)->delete();
+            if (Announcements::where('id',$id)->exists()){
+                Announcements::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The subject faculties is deleted successfully',
+                    'message' => 'The announcements is deleted successfully',
                 ],200);
 
             }else{
@@ -181,15 +182,15 @@ class SubjectFacultiesController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->sub_faculty_ids)) {
-                foreach ($request->sub_faculty_ids as $sub_faculty_id) {
-                    $details = SubjectFaculties::findOrFail($sub_faculty_id);
+            if (!empty($request->annoucement_ids)) {
+                foreach ($request->annoucement_ids as $annoucement_id) {
+                    $details = Announcements::findOrFail($annoucement_id);
                     $details->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The subject faculties are deleted successfully',
+                    'message' => 'The announcements are deleted successfully',
                 ], 200);
             } else {
                 return response()->json([

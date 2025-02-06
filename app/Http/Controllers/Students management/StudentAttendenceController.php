@@ -1,15 +1,15 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Students management;
 
 use App\Models\EmployeeAttendence;
-use App\Models\StudentGrades;
+use App\Models\StudentAttendence;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Exception;
-class EmployeeAttendenceController extends Controller
+class StudentAttendenceController extends Controller
 {
     /**
      * Method allow to display list of all designations or single academic_name.
@@ -19,7 +19,7 @@ class EmployeeAttendenceController extends Controller
     public function index()
     {
         try {
-            $details = EmployeeAttendence::orderBy('id','DESC')->get();
+            $details = StudentAttendence::orderBy('id','DESC')->get();
             return response()->json([
                 'data' => $details,
                 'message' => 'Success',
@@ -43,8 +43,8 @@ class EmployeeAttendenceController extends Controller
     public function store(Request $request)
     {
         try {
-            EmployeeAttendence::insertGetId([
-                'emp_id' => $request->emp_id,
+            StudentAttendence::insertGetId([
+                'student_id' => $request->student_id,
                 'date' => $request->date,
                 'status' => $request->status,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
@@ -52,7 +52,7 @@ class EmployeeAttendenceController extends Controller
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'Name is added successfully',
+                'message' => 'attandence is added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -73,8 +73,8 @@ class EmployeeAttendenceController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (EmployeeAttendence::where('id',$id)->exists()){
-                $details = EmployeeAttendence::where('id',$id)->first();
+            if (StudentAttendence::where('id',$id)->exists()){
+                $details = StudentAttendence::where('id',$id)->first();
                 return response()->json([
                     'data' => $details,
                     'message' => 'Success',
@@ -106,7 +106,7 @@ class EmployeeAttendenceController extends Controller
     {
         try {
             // Find the academic name by ID
-            $details = EmployeeAttendence::find($id);
+            $details = StudentAttendence::find($id);
 
             if (!$details) {
                 return response()->json([
@@ -116,7 +116,7 @@ class EmployeeAttendenceController extends Controller
             }
 
             // Update the academic name and save
-            $details->emp_id = $request->emp_id;
+            $details->student_id = $request->student_id;
             $details->date = $request->date;
             $details->status = $request->status;
             $details->updated_at = Carbon::now()->format('Y-m-d H:i:s');
@@ -124,7 +124,7 @@ class EmployeeAttendenceController extends Controller
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'employee attendence has updated successfully',
+                'message' => 'student attendence has updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -149,12 +149,12 @@ class EmployeeAttendenceController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (EmployeeAttendence::where('id',$id)->exists()){
-                EmployeeAttendence::where('id',$id)->delete();
+            if (StudentAttendence::where('id',$id)->exists()){
+                StudentAttendence::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The employee attendence is deleted successfully',
+                    'message' => 'The student attendence is deleted successfully',
                 ],200);
 
             }else{
@@ -181,15 +181,15 @@ class EmployeeAttendenceController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->emp_attendence_ids)) {
-                foreach ($request->emp_attendence_id as $emp_attendence_id) {
-                    $details = EmployeeAttendence::findOrFail($emp_attendence_id);
+            if (!empty($request->student_attendence_ids)) {
+                foreach ($request->student_attendence_ids as $student_attendence_id) {
+                    $details = StudentAttendence::findOrFail($student_attendence_id);
                     $details->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The employee attendence are deleted successfully',
+                    'message' => 'The student attendence are deleted successfully',
                 ], 200);
             } else {
                 return response()->json([

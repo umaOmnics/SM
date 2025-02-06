@@ -1,6 +1,7 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\StudentsController;
+use management\StudentsController;
 
 Route::group(['prefix' => 'v1/students'], function () {
 

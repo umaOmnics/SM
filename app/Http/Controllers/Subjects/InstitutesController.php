@@ -1,17 +1,16 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Subjects;
 
-use App\Models\Designation;
-use App\Models\Employees;
+use App\Http\Controllers\Controller;
 use App\Models\Institutes;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Exception;
+
 class InstitutesController extends Controller
 {
     /**

@@ -1,6 +1,7 @@
 <?php
+
+use App\Http\Controllers\Subjects\ClassTimeTableController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\ClassTimeTableController;
 
 Route::group(['prefix' => 'v1/classTimeTable'], function () {
 

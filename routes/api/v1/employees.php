@@ -1,6 +1,7 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\EmployeesController;
+use management\EmployeesController;
 
 Route::group(['prefix' => 'v1/employees'], function () {
 
