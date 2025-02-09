@@ -36,7 +36,7 @@ class ClassTimeTableController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store or create the new Designations.
      * @param Request $request
      * @return JsonResponse
      * @throws ValidationException

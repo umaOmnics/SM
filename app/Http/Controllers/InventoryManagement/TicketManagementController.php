@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\TicketManagement;
+namespace App\Http\Controllers\InventoryManagement;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tags;

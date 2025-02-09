@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Designations;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Designation;
+use App\Models\Designations;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
@@ -19,7 +19,7 @@ class DesignationController extends Controller
     public function index()
     {
         try {
-            $designations = Designation::orderBy('id','DESC')->get();
+            $designations = Designations::orderBy('id','DESC')->get();
             // $query = $this->getMasterDataDetailsOverview($designation);
             return response()->json([
                 'data' => $designations,
@@ -36,7 +36,7 @@ class DesignationController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store or create the new Designations.
      * @param Request $request
      * @return JsonResponse
      * @throws ValidationException
@@ -47,7 +47,7 @@ class DesignationController extends Controller
             $request->validate([
                 'name' => 'required|string|unique:designations'
             ]);
-            $designation = Designation::insertGetId([
+            $designation = Designations::insertGetId([
                 'name' => $request->name,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
@@ -75,8 +75,8 @@ class DesignationController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (Designation::where('id',$id)->exists()){
-                $designation = Designation::where('id',$id)->first();
+            if (Designations::where('id',$id)->exists()){
+                $designation = Designations::where('id',$id)->first();
                 // $query = $this->getMasterDataDetailsOverview($designation);
                 return response()->json([
                     'data' => $designation,
@@ -109,7 +109,7 @@ class DesignationController extends Controller
     {
         try {
             // Find the academic name by ID
-            $designation = Designation::find($id);
+            $designation = Designations::find($id);
 
             if (!$designation) {
                 return response()->json([
@@ -155,8 +155,8 @@ class DesignationController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (Designation::where('id',$id)->exists()){
-                Designation::where('id',$id)->delete();
+            if (Designations::where('id',$id)->exists()){
+                Designations::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
@@ -189,7 +189,7 @@ class DesignationController extends Controller
         try {
             if (!empty($request->Designation_id)) {
                 foreach ($request->Designation_id as $designation_id) {
-                    $designation = Designation::findOrFail($designation_id);
+                    $designation = Designations::findOrFail($designation_id);
                     $designation->delete();
                 }
 

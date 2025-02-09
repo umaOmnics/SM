@@ -1,25 +1,27 @@
 <?php
 
-namespace App\Http\Controllers\Client;
+namespace App\Http\Controllers\EmployeeManagement;
 
 use App\Http\Controllers\Controller;
-use App\Models\Designations;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\EmployeeAssets;
+use App\Models\EmployeePromotions;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Exception;
+use Illuminate\Support\Facades\DB;
 
-class DesignationsController extends Controller
+class EmployeeAssetsController extends Controller
 {
     /**
-     * Method allow to display list of all Designations.
+     * Method allow to display list of all Employee assets.
      * @return JsonResponse
      * @throws Exception
      */
     public function index():JsonResponse
     {
         try {
-            $query = Designations::all();
+            $query = EmployeeAssets::all();
 
             return response()->json([
                 'data' => $query,
@@ -35,7 +37,7 @@ class DesignationsController extends Controller
     } // End Function
 
     /**
-     * Method allow to show the particular user details.
+     * Method allow to show the particular assets details.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -43,10 +45,10 @@ class DesignationsController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            if(Designations::where('id',$id)->exists()) {
-                $designation=Designations::find($id);
+            if(EmployeeAssets::where('id',$id)->exists()) {
+                $data=EmployeeAssets::find($id);
                 return response()->json([
-                    'user' => $designation,
+                    'data' => $data,
                     'message' => 'Success'
                 ],200);
             }else{
@@ -64,23 +66,29 @@ class DesignationsController extends Controller
         }
     } // End Function
     /**
-     * Method allow to create a Designations
+     * Method allow to create a Assets
      * @param Request $request
      * @return JsonResponse
      */
-    public function createDesignation(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         try {
             $validatedData = $request->validate([
-                'name' => 'required|unique:designations|max:255',
+                'employee_id' => 'required',
+                'status' => 'required|in:issued,returned,lost,damaged'
             ]);
-            $designation = Designations::create([
-                'name' => $validatedData['name'],
+            $data_id = DB::table('employee_assets')->insertGetId([
+                'employee_id' => $request->employee_id,
+                'asset_name' => $request->asset_name,
+                'issued_date' => $request->issued_date,
+                'return_date' => $request->return_date,
+                'status' => $request->status,
+                'remarks' => $request->remarks,
                 'created_at' => now(),
             ]);
             return response()->json([
-                'message' => 'Designations created successfully',
-                'designation' => $designation,
+                'message' => 'Record created successfully',
+                'data' => $data_id,
             ]);
         }
         catch (Exception $exception)
@@ -93,33 +101,39 @@ class DesignationsController extends Controller
     }//End Function
 
     /**
-     * Method allows to update Designations
+     * Method allows to update Assets
      * @param Request $request
      * @param $id
      * @return JsonResponse
      * @throws Exception
      */
-    public function updateDesignation(Request $request, $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         try {
-            if (Designations::find($id)) {
+            if (EmployeePromotions::find($id)) {
                 $validatedData = $request->validate([
-                    'name' => 'required|unique:designations,name,' . $id . '|max:255',
+                    'employee_id' => 'required',
+                    'status' => 'required|in:issued,returned,lost,damaged'
                 ]);
-                $designation = Designations::findOrFail($id);
-                $designation->update([
-                    'name' => $validatedData['name'],
-                    'updated_at' => now(),
+                $data = EmployeePromotions::findOrFail($id);
+                $data->update([
+                    'employee_id' => $request->employee_id,
+                    'asset_name' => $request->asset_name,
+                    'issued_date' => $request->issued_date,
+                    'return_date' => $request->return_date,
+                    'status' => $request->status,
+                    'remarks' => $request->remarks,
+                    'updated_at' => Carbon::now(),
                 ]);
                 return response()->json([
-                    'message' => 'Designations updated successfully',
-                    'designation' => $designation,
+                    'message' => 'Record updated successfully',
+                    'data' => $data,
                 ]);
             }else{
                 return response()->json([
-                    'status' => 'Error',
+                    'status' => 'No Content',
                     'message' => 'There is no relevant information for selected query',
-                ],500);
+                ],210);
             }
         } catch (Exception $exception)
         {
@@ -131,18 +145,18 @@ class DesignationsController extends Controller
     }//End Function
 
     /**
-     * Method allow to destroy Designations
+     * Method allow to destroy Assets
      * @param $id
      * @return JsonResponse
      */
-    public function destroyDesignation($id): JsonResponse
+    public function destroy($id): JsonResponse
     {
         try {
-            if (Designations::where('id', $id)->exists()) {
-                $designation = Designations::find($id);
-                $designation->delete();
+            if (EmployeeAssets::where('id', $id)->exists()) {
+                $data = EmployeeAssets::find($id);
+                $data->delete();
                 return response()->json([
-                    'message' => 'Designations deleted successfully',
+                    'message' => 'Record deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
@@ -153,7 +167,7 @@ class DesignationsController extends Controller
         }
         catch (Exception $e) {
             return response()->json([
-                'message' => 'Designations not found'
+                'message' => 'Record not found'
             ], 404);
         }
     }//End Function

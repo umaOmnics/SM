@@ -1,34 +1,34 @@
 <?php
 
-namespace App\Http\Controllers\Items;
+namespace App\Http\Controllers\InventoryManagement;
 
 use App\Http\Controllers\Controller;
 use Exception;
 use Illuminate\Http\Request;
-use App\Models\ItemOrderDetails;
+use App\Models\Vendor;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 
-class ItemOrderDetailsController extends Controller
+class VendorController extends Controller
 {
     /**
-     * Method allow to display list of all Items.
+     * Method allow to display list of all Vendors.
      * @return JsonResponse
      * @throws Exception
      */
     public function index(): JsonResponse
     {
         try {
-            $item_orders = ItemOrderDetails::orderBy('id','DESC')->get();
-            $item_order_details = [];
-            foreach($item_orders as $item){
-                $item_order_details[] = $this->itemsOrderDetailsOverview($item);
+            $vendors = Vendor::orderBy('id','DESC')->get();
+            $vendors_details = [];
+            foreach($vendors as $vendor){
+                $vendors_details[] = $this->vendorsOverview($vendor);
             }
 
             return response()->json([
-                'data' => $item_order_details,
+                'data' => $vendors_details,
                 'message' => 'Success',
             ], 200);
 
@@ -42,33 +42,27 @@ class ItemOrderDetailsController extends Controller
     } // End Function
 
     /**
-     * Method allow to Item order details.
+     * Method allow to store vendor.
      * @param Request $request
      * @return JsonResponse
-     * @throws ValidationException|Exception
+     * @throws ValidationException
      */
     public function store(Request $request): JsonResponse
     {
         try {
             $request->validate([
-                'item_id' => 'required|int',
-                'vendor_id' => 'required|int',
-                'quantity' => 'required|int'
+                'name' => 'required|string|unique:vendors'
             ]);
-            $item_order_details_id = ItemOrderDetails::insertGetId([
-                'item_id' => $request->item_id, // Generates a random 10-character string
-                'vendor_id' => $request->vendor_id,
-                'quantity' => $request->quantity,
-                'order_date' => $request->order_date,
-                'delivery_date' => $request->delivery_date,
+            $vendor_id = Vendor::insertGetId([
+                'name' => $request->name,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
-            $query = ItemOrderDetails::where('id',$item_order_details_id)->first();
-            $item_order_details = $this->itemsOrderDetailsOverview($query);
+            $vendor = Vendor::where('id',$vendor_id)->first();
+            $vendor_details = $this->vendorsOverview($vendor);
             return response()->json([
-                'data' => $item_order_details,
+                'data' => $vendor_details,
                 'status' => 'Success',
-                'message' => 'Item order details added successfully',
+                'message' => 'Item added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -81,31 +75,29 @@ class ItemOrderDetailsController extends Controller
     } // End Function
 
     /**
-     * Method allow to show all the itemsOrderDetailsOverview.
-     * @param $order_query
-     * @return array
+     * Method allow to show all the Vendors overview.
+     * @param $vendor
+     * @return JsonResponse|array
      */
-    public function itemsOrderDetailsOverview($order_query): array
+    public function vendorsOverview($vendor): JsonResponse|array
     {
-        $item_order_details_array = [];
-        if(!empty($order_query)){
-            $item_order_details_array = [
-                'id' => $order_query->id,
-                'item_id' => $order_query->item_id,
-                'vendor_id' => $order_query->vendor_id,
-                'quantity' => $order_query->quantity,
-                'order_date' => $order_query->order_date,
-                'delivery_date' => $order_query->delivery_date,
-                'created_at' => $order_query->created_at,
-                'updated_at' => $order_query->updated_at,
-                'deleted_at' => $order_query->deleted_at
+        $vendor_array = [];
+        if(!empty($vendor)){
+            $vendor_array = [
+                'id' => $vendor->id,
+                'name' => $vendor->name,
+                'address' => $vendor->address,
+                'email' => $vendor->email,
+                'phone_number' => $vendor->phone_number,
+                'created_at' => $vendor->created_at,
+                'updated_at' => $vendor->updated_at
             ];
         }
-        return $item_order_details_array;
+        return $vendor_array;
     }
 
     /**
-     * Method allow to show the item order details.
+     * Method allow to show the item details.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -113,11 +105,11 @@ class ItemOrderDetailsController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (ItemOrderDetails::where('id',$id)->exists()){
-                $item_order_query = ItemOrderDetails::where('id',$id)->first();
-                $item_order_details = $this->itemsOrderDetailsOverview($item_order_query);
+            if (Vendor::where('id',$id)->exists()){
+                $vendor = Vendor::where('id',$id)->first();
+                $query = $this->vendorsOverview($vendor);
                 return response()->json([
-                    'data' => $item_order_details,
+                    'data' => $query,
                     'message' => 'Success',
                 ],200);
 
@@ -137,7 +129,7 @@ class ItemOrderDetailsController extends Controller
     } // End Function
 
     /**
-     * Method allow to update Item Order Details.
+     * Method allow to update Vendor.
      * @param Request $request
      * @param $id
      * @return JsonResponse
@@ -146,37 +138,35 @@ class ItemOrderDetailsController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            $item_order = ItemOrderDetails::find($id);
+            $vendor = Vendor::find($id);
 
-            if (!$item_order) {
+            if (!$vendor) {
                 return response()->json([
                     'status' => 'No Content',
                     'message' => 'There is no relevant information for the selected query',
                 ], 404);
             }
 
+            // Validate the request
             $request->validate([
-                'item_id' => 'required|int',
-                'vendor_id' => 'required|int',
-                'quantity' => 'required|int'
+                'name' => ['required', 'string', Rule::unique('vendors', 'name')->ignore($vendor->id)],
             ]);
 
             // Update the academic name and save
-           $item_order->item_id = $request->item_id;
-           $item_order->vendor_id = $request->vendor_id;
-           $item_order->quantity = $request->quantity;
-           $item_order->order_date = $request->order_date;
-           $item_order->delivery_date = $request->delivery_date;
-           $item_order->updated_at = Carbon::now()->format('Y-m-d H:i:s');
-            if($item_order->save()){
-                $updated_order_item = ItemOrderDetails::where('id',$id)->first();
-                $item_order_details = $this->itemsOrderDetailsOverview($updated_order_item);
+            $vendor->name = $request->name;
+            $vendor->address = $request->address;
+            $vendor->email = $request->email;
+            $vendor->phone_number = $request->phone_number;
+            $vendor->updated_at = Carbon::now()->format('Y-m-d H:i:s');
+            if($vendor->save()){
+                $updated_vendor = Vendor::where('id',$id)->first();
+                $vendor_details = $this->vendorsOverview($updated_vendor);
             }
 
             return response()->json([
-                'data' => $item_order_details,
+                'data' => $vendor_details,
                 'status' => 'Success',
-                'message' => 'The item order updated successfully',
+                'message' => 'The vendor updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -193,7 +183,7 @@ class ItemOrderDetailsController extends Controller
 
 
     /**
-     * Method allow to soft delete the particular name.
+     * Method allow to soft delete the particular vendor.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -201,12 +191,12 @@ class ItemOrderDetailsController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (ItemOrderDetails::where('id',$id)->exists()){
-                ItemOrderDetails::where('id',$id)->delete();
+            if (Vendor::where('id',$id)->exists()){
+                Vendor::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The item order deleted successfully',
+                    'message' => 'The vendor deleted successfully',
                 ],200);
 
             }else{
@@ -233,20 +223,20 @@ class ItemOrderDetailsController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->item_order_id)) {
-                foreach ($request->item_order_id as $item_order_id) {
-                    $item_order = ItemOrderDetails::findOrFail($item_order_id);
-                    $item_order->delete();
+            if (!empty($request->vendor_id)) {
+                foreach ($request->vendor_id as $vendor_id) {
+                    $vendor = Vendor::findOrFail($vendor_id);
+                    $vendor->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The item order deleted successfully',
+                    'message' => 'The vendors deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
                     'status' => 'Error',
-                    'message' => 'Please select at least one name to delete'
+                    'message' => 'Please select at least one vendor to delete'
                 ], 422);
             }
 

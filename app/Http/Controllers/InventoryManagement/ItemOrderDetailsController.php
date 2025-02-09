@@ -1,30 +1,34 @@
 <?php
 
-namespace App\Http\Controllers\Departments;
+namespace App\Http\Controllers\InventoryManagement;
 
 use App\Http\Controllers\Controller;
+use Exception;
 use Illuminate\Http\Request;
-use App\Models\Department;
+use App\Models\ItemOrderDetails;
 use Carbon\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\JsonResponse;
-use Exception;
-// use App\Http\Controllers\Departments;
+use Illuminate\Validation\ValidationException;
 
-class DepartmentController extends Controller
+class ItemOrderDetailsController extends Controller
 {
     /**
-     * Method allow to display list of all departments or single academic_name.
+     * Method allow to display list of all Items.
      * @return JsonResponse
      * @throws Exception
      */
-    public function index()
+    public function index(): JsonResponse
     {
         try {
-            $departments = Department::orderBy('id','DESC')->get();
-            // $query = $this->getMasterDataDetailsOverview($department);
+            $item_orders = ItemOrderDetails::orderBy('id','DESC')->get();
+            $item_order_details = [];
+            foreach($item_orders as $item){
+                $item_order_details[] = $this->itemsOrderDetailsOverview($item);
+            }
+
             return response()->json([
-                'data' => $departments,
+                'data' => $item_order_details,
                 'message' => 'Success',
             ], 200);
 
@@ -38,25 +42,33 @@ class DepartmentController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Department.
+     * Method allow to Item order details.
      * @param Request $request
      * @return JsonResponse
-     * @throws ValidationException
+     * @throws ValidationException|Exception
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         try {
             $request->validate([
-                'name' => 'required|string|unique:departments'
+                'item_id' => 'required|int',
+                'vendor_id' => 'required|int',
+                'quantity' => 'required|int'
             ]);
-            $department = Department::insertGetId([
-                'name' => $request->name,
+            $item_order_details_id = ItemOrderDetails::insertGetId([
+                'item_id' => $request->item_id, // Generates a random 10-character string
+                'vendor_id' => $request->vendor_id,
+                'quantity' => $request->quantity,
+                'order_date' => $request->order_date,
+                'delivery_date' => $request->delivery_date,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
-
+            $query = ItemOrderDetails::where('id',$item_order_details_id)->first();
+            $item_order_details = $this->itemsOrderDetailsOverview($query);
             return response()->json([
+                'data' => $item_order_details,
                 'status' => 'Success',
-                'message' => 'Name is added successfully',
+                'message' => 'Item order details added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -69,7 +81,31 @@ class DepartmentController extends Controller
     } // End Function
 
     /**
-     * Method allow to delete the particular academic_name.
+     * Method allow to show all the itemsOrderDetailsOverview.
+     * @param $order_query
+     * @return array
+     */
+    public function itemsOrderDetailsOverview($order_query): array
+    {
+        $item_order_details_array = [];
+        if(!empty($order_query)){
+            $item_order_details_array = [
+                'id' => $order_query->id,
+                'item_id' => $order_query->item_id,
+                'vendor_id' => $order_query->vendor_id,
+                'quantity' => $order_query->quantity,
+                'order_date' => $order_query->order_date,
+                'delivery_date' => $order_query->delivery_date,
+                'created_at' => $order_query->created_at,
+                'updated_at' => $order_query->updated_at,
+                'deleted_at' => $order_query->deleted_at
+            ];
+        }
+        return $item_order_details_array;
+    }
+
+    /**
+     * Method allow to show the item order details.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -77,11 +113,11 @@ class DepartmentController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (Department::where('id',$id)->exists()){
-                $department = Department::where('id',$id)->first();
-                // $query = $this->getMasterDataDetailsOverview($department);
+            if (ItemOrderDetails::where('id',$id)->exists()){
+                $item_order_query = ItemOrderDetails::where('id',$id)->first();
+                $item_order_details = $this->itemsOrderDetailsOverview($item_order_query);
                 return response()->json([
-                    'data' => $department,
+                    'data' => $item_order_details,
                     'message' => 'Success',
                 ],200);
 
@@ -101,7 +137,7 @@ class DepartmentController extends Controller
     } // End Function
 
     /**
-     * Method allow to update the name of the particular academic_name.
+     * Method allow to update Item Order Details.
      * @param Request $request
      * @param $id
      * @return JsonResponse
@@ -110,29 +146,37 @@ class DepartmentController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            // Find the academic name by ID
-            $department = Department::find($id);
+            $item_order = ItemOrderDetails::find($id);
 
-            if (!$department) {
+            if (!$item_order) {
                 return response()->json([
                     'status' => 'No Content',
                     'message' => 'There is no relevant information for the selected query',
                 ], 404);
             }
 
-            // Validate the request
             $request->validate([
-                'name' => ['required', 'string', Rule::unique('departments', 'name')->ignore($department->id)],
+                'item_id' => 'required|int',
+                'vendor_id' => 'required|int',
+                'quantity' => 'required|int'
             ]);
 
             // Update the academic name and save
-            $department->name = $request->name;
-            $department->updated_at = Carbon::now()->format('Y-m-d H:i:s');
-            $department->save();
+           $item_order->item_id = $request->item_id;
+           $item_order->vendor_id = $request->vendor_id;
+           $item_order->quantity = $request->quantity;
+           $item_order->order_date = $request->order_date;
+           $item_order->delivery_date = $request->delivery_date;
+           $item_order->updated_at = Carbon::now()->format('Y-m-d H:i:s');
+            if($item_order->save()){
+                $updated_order_item = ItemOrderDetails::where('id',$id)->first();
+                $item_order_details = $this->itemsOrderDetailsOverview($updated_order_item);
+            }
 
             return response()->json([
+                'data' => $item_order_details,
                 'status' => 'Success',
-                'message' => 'The name is updated successfully',
+                'message' => 'The item order updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -142,7 +186,7 @@ class DepartmentController extends Controller
         } catch (\Exception $exception) {
             return response()->json([
                 'status' => 'Error',
-                'message' => 'An error occurred while updating the name.',
+                'message' => 'An error occurred while updating the item.',
             ], 500);
         }
     } // End Function
@@ -157,12 +201,12 @@ class DepartmentController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (Department::where('id',$id)->exists()){
-                Department::where('id',$id)->delete();
+            if (ItemOrderDetails::where('id',$id)->exists()){
+                ItemOrderDetails::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The name is deleted successfully',
+                    'message' => 'The item order deleted successfully',
                 ],200);
 
             }else{
@@ -181,7 +225,7 @@ class DepartmentController extends Controller
     } // End Function
 
     /**
-     * Method allow to soft delete the set of departments.
+     * Method allow to soft delete the set of designations.
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
@@ -189,15 +233,15 @@ class DepartmentController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->Department_id)) {
-                foreach ($request->Department_id as $department_id) {
-                    $department = Department::findOrFail($department_id);
-                    $department->delete();
+            if (!empty($request->item_order_id)) {
+                foreach ($request->item_order_id as $item_order_id) {
+                    $item_order = ItemOrderDetails::findOrFail($item_order_id);
+                    $item_order->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The name are deleted successfully',
+                    'message' => 'The item order deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
@@ -215,4 +259,4 @@ class DepartmentController extends Controller
         }
     } // End Function
 
-} // End Class
+}

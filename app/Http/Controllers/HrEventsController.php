@@ -1,25 +1,26 @@
 <?php
 
-namespace App\Http\Controllers\Client;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\Designations;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Models\EmployeePromotions;
+use App\Models\HrEvents;
+use App\Models\Resignations;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Exception;
-
-class DesignationsController extends Controller
+class HrEventsController extends Controller
 {
     /**
-     * Method allow to display list of all Designations.
+     * Method allow to display list of all HRevents.
      * @return JsonResponse
      * @throws Exception
      */
     public function index():JsonResponse
     {
         try {
-            $query = Designations::all();
+            $query = HrEvents::all();
 
             return response()->json([
                 'data' => $query,
@@ -35,7 +36,7 @@ class DesignationsController extends Controller
     } // End Function
 
     /**
-     * Method allow to show the particular user details.
+     * Method allow to show the particular hrevents details.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -43,10 +44,10 @@ class DesignationsController extends Controller
     public function show($id): JsonResponse
     {
         try {
-            if(Designations::where('id',$id)->exists()) {
-                $designation=Designations::find($id);
+            if(HrEvents::where('id',$id)->exists()) {
+                $data=HrEvents::find($id);
                 return response()->json([
-                    'user' => $designation,
+                    'data' => $data,
                     'message' => 'Success'
                 ],200);
             }else{
@@ -64,23 +65,28 @@ class DesignationsController extends Controller
         }
     } // End Function
     /**
-     * Method allow to create a Designations
+     * Method allow to create a Hrevents
      * @param Request $request
      * @return JsonResponse
      */
-    public function createDesignation(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         try {
             $validatedData = $request->validate([
-                'name' => 'required|unique:designations|max:255',
+                'event_name' => 'required',
+                'event_date' => 'required'
             ]);
-            $designation = Designations::create([
-                'name' => $validatedData['name'],
+            $data_id = DB::table('hr_events')->insertGetId([
+                'event_name' => $request->event_name,
+                'event_date' => $request->event_date,
+                'organized_by' => $request->organized_by,
+                'location' => $request->location,
+                'description' => $request->description,
                 'created_at' => now(),
             ]);
             return response()->json([
-                'message' => 'Designations created successfully',
-                'designation' => $designation,
+                'message' => 'Record created successfully',
+                'data' => $data_id,
             ]);
         }
         catch (Exception $exception)
@@ -93,33 +99,38 @@ class DesignationsController extends Controller
     }//End Function
 
     /**
-     * Method allows to update Designations
+     * Method allows to update Hrevents
      * @param Request $request
      * @param $id
      * @return JsonResponse
      * @throws Exception
      */
-    public function updateDesignation(Request $request, $id): JsonResponse
+    public function update(Request $request, $id): JsonResponse
     {
         try {
-            if (Designations::find($id)) {
+            if (EmployeePromotions::find($id)) {
                 $validatedData = $request->validate([
-                    'name' => 'required|unique:designations,name,' . $id . '|max:255',
+                    'event_name' => 'required',
+                    'event_date' => 'required'
                 ]);
-                $designation = Designations::findOrFail($id);
-                $designation->update([
-                    'name' => $validatedData['name'],
-                    'updated_at' => now(),
+                $data = EmployeePromotions::findOrFail($id);
+                $data->update([
+                    'event_name' => $request->event_name,
+                    'event_date' => $request->event_date,
+                    'organized_by' => $request->organized_by,
+                    'location' => $request->location,
+                    'description' => $request->description,
+                    'updated_at' => Carbon::now(),
                 ]);
                 return response()->json([
-                    'message' => 'Designations updated successfully',
-                    'designation' => $designation,
+                    'message' => 'Record updated successfully',
+                    'data' => $data,
                 ]);
             }else{
                 return response()->json([
-                    'status' => 'Error',
+                    'status' => 'No Content',
                     'message' => 'There is no relevant information for selected query',
-                ],500);
+                ],210);
             }
         } catch (Exception $exception)
         {
@@ -131,18 +142,18 @@ class DesignationsController extends Controller
     }//End Function
 
     /**
-     * Method allow to destroy Designations
+     * Method allow to destroy Hrevents
      * @param $id
      * @return JsonResponse
      */
-    public function destroyDesignation($id): JsonResponse
+    public function destroy($id): JsonResponse
     {
         try {
-            if (Designations::where('id', $id)->exists()) {
-                $designation = Designations::find($id);
-                $designation->delete();
+            if (HrEvents::where('id', $id)->exists()) {
+                $data = HrEvents::find($id);
+                $data->delete();
                 return response()->json([
-                    'message' => 'Designations deleted successfully',
+                    'message' => 'Record deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
@@ -153,7 +164,7 @@ class DesignationsController extends Controller
         }
         catch (Exception $e) {
             return response()->json([
-                'message' => 'Designations not found'
+                'message' => 'Record not found'
             ], 404);
         }
     }//End Function

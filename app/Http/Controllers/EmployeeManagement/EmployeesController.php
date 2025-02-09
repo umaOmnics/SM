@@ -1,33 +1,35 @@
 <?php
 
-namespace App\Http\Controllers\Students management;
+namespace App\Http\Controllers\EmployeeManagement;
 
-use App\Models\Designation;
+use App\Models\Designations;
+use App\Models\Employees;
 use App\Models\Students;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Exception;
 use Illuminate\Validation\ValidationException;
-class StudentsController extends Controller
+use Exception;
+use App\Http\Controllers\Controller;
+class EmployeesController extends Controller
 {
     /**
-     * Method allow to display list of all students.
+     * Method allow to display list of all employees.
      * @return JsonResponse
      * @throws Exception
      */
-    public function index(): JsonResponse
+    public function index():JsonResponse
     {
         try {
-            $all_students = [];
-            $students = Students::orderBy('id','DESC')->get();
-            foreach ($students as $student) {
-                $all_students[] = $this->studentDetails($student->id);
+            $all_employees = [];
+            $employees = Employees::orderBy('id','DESC')->get();
+            foreach ($employees as $employee) {
+                $all_employees[] = $this->employeeDetails($employee->id);
             }
             return response()->json([
-                'data' => $all_students,
+                'data' => $all_employees,
                 'message' => 'Success',
             ], 200);
 
@@ -40,75 +42,63 @@ class StudentsController extends Controller
         }
     } // End Function
 
-    public function studentDetails($student_id)
+    public function employeeDetails($employee_id)
     {
         $result = null;
-        $student = Students::where('id', $student_id)->first();
-        if(!empty($student)) {
+        $employee = Employees::where('id', $employee_id)->first();
+        if(!empty($employee)) {
             $result = [
-                'id' => $student->id,
-                'category_id' => $student->category_id,
-                'first_name' => $student->first_name,
-                'last_name' => $student->last_name,
-                'email' => $student->email,
-                'dob' => $student->dob,
-                'blood_group' => $student->blood_group,
-                'nationality' => $student->nationality,
-                'religion' => $student->religion,
-                'phone' => $student->phone,
-                'profile_photo_url' => $student->profile_photo_url,
-                'mobile_number' => $student->mobile_number,
-                'address_1' => $student->address_1,
-                'address_2' => $student->address_2,
-                'city' => $student->city,
-                'state_id' => $student->state_id,
-                'country_id' => $student->country_id,
-                'admission_number' => $student->admission_number,
-                'joining_date' => $student->joining_date,
-                'roll_number' => $student->roll_number,
-                'parent_first_name' => $student->parent_first_name,
-                'parent_last_name' => $student->parent_last_name,
-                'relation' => $student->relation,
-                'occupation' => $student->occupation,
-                'parent_email' => $student->parent_email,
-                'parent_phone' => $student->parent_phone,
-                'parent_mobile_number' => $student->parent_mobile_number,
-                'parent_address_1' => $student->parent_address_1,
-                'parent_address_2' => $student->parent_address_2,
-                'parent_city' => $student->parent_city,
-                'parent_state_id' => $student->parent_state_id,
-                'parent_country_id' => $student->parent_country_id,
-                'parent_postal_code' => $student->parent_postal_code,
-                'created_at' => $student->created_at,
-                'updated_at' => $student->updated_at,
+                'id' => $employee->id,
+                'joining_date' => $employee->joining_date,
+                'category_id' => $employee->category_id,
+                'designation_id' => $employee->designation_id,
+                'department_id' => $employee->department_id,
+                'first_name' => $employee->first_name,
+                'last_name' => $employee->last_name,
+                'email' => $employee->email,
+                'dob' => $employee->dob,
+                'blood_group' => $employee->blood_group,
+                'phone' => $employee->phone,
+                'profile_photo_url' => $employee->profile_photo_url,
+                'mobile_number' => $employee->mobile_number,
+                'address_1' => $employee->address_1,
+                'address_2' => $employee->address_2,
+                'city' => $employee->city,
+                'state_id' => $employee->state_id,
+                'country_id' => $employee->country_id,
+                'postal_code' => $employee->postal_code,
+                'created_at' => $employee->created_at,
+                'updated_at' => $employee->updated_at,
             ];
         }
         return $result;
     }
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store or create the new Designations.
      * @param Request $request
+     * @param $employee_id
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store(Request $request, $student_id = null)
+    public function store(Request $request, $employee_id = null)
     {
         try {
             $request->validate([
                 'first_name' => 'required|string',
                 'last_name' => 'required|string',
-                'email' => 'required|string|unique:students',
+                'email' => 'required|string|unique:employees',
             ]);
 
             $data = [
+                'joining_date' => $request->joining_date,
                 'category_id' => $request->category_id,
+                'designation_id' => $request->designation_id,
+                'department_id' => $request->department_id,
                 'first_name' => $request->first_name,
                 'last_name' => $request->last_name,
                 'email' => $request->email,
                 'dob' => $request->dob,
                 'blood_group' => $request->blood_group,
-                'nationality' => $request->nationality,
-                'religion' => $request->religion,
                 'phone' => $request->phone,
                 'profile_photo_url' => $request->profile_photo_url,
                 'mobile_number' => $request->mobile_number,
@@ -117,35 +107,20 @@ class StudentsController extends Controller
                 'city' => $request->city,
                 'state_id' => $request->state_id,
                 'country_id' => $request->country_id,
-                'admission_number' => $request->admission_number,
-                'joining_date' => $request->joining_date,
-                'roll_number' => $request->roll_number,
-                'parent_first_name' => $request->parent_first_name,
-                'parent_last_name' => $request->parent_last_name,
-                'relation' => $request->relation,
-                'occupation' => $request->occupation,
-                'parent_email' => $request->parent_email,
-                'parent_phone' => $request->parent_phone,
-                'parent_mobile_number' => $request->parent_mobile_number,
-                'parent_address_1' => $request->parent_address_1,
-                'parent_address_2' => $request->parent_address_2,
-                'parent_city' => $request->parent_city,
-                'parent_state_id' => $request->parent_state_id,
-                'parent_country_id' => $request->parent_country_id,
-                'parent_postal_code' => $request->parent_postal_code,
+                'postal_code' => $request->postal_code,
                 'created_at' => Carbon::now(),
             ];
 
-            if(empty($student_id)) {
-                $student_id = Students::insertGetId($data);
+            if(empty($employee_id)) {
+                $employee_id = Employees::insertGetId($data);
             } else {
-                DB::table('students')->update($data);
+                DB::table('employees')->update($data);
             }
-            $details = $this->studentDetails($student_id);
+            $details = $this->employeeDetails($employee_id);
             return response()->json([
                 'data' => $details,
                 'status' => 'Success',
-                'message' => 'Student created / updated successfully',
+                'message' => 'Employee created / updated successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -166,8 +141,8 @@ class StudentsController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (Students::where('id',$id)->exists()){
-                $details = $this->studentDetails($id);
+            if (Employees::where('id',$id)->exists()){
+                $details = $this->employeeDetails($id);
 
                 return response()->json([
                     'data' => $details,
@@ -200,7 +175,7 @@ class StudentsController extends Controller
     {
         try {
             // Find the academic name by ID
-            $designation = Designation::find($id);
+            $designation = Designations::find($id);
 
             if (!$designation) {
                 return response()->json([
@@ -246,12 +221,12 @@ class StudentsController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (Students::where('id',$id)->exists()){
-                Students::where('id',$id)->delete();
+            if (Employees::where('id',$id)->exists()){
+                Employees::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'Student deleted successfully',
+                    'message' => 'Employee deleted successfully',
                 ],200);
 
             }else{
@@ -278,15 +253,15 @@ class StudentsController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->students_ids)) {
-                foreach ($request->students_ids as $students_id) {
-                    $students = Students::findOrFail($students_id);
-                    $students->delete();
+            if (!empty($request->employee_ids)) {
+                foreach ($request->employee_ids as $employee_id) {
+                    $employees = Employees::findOrFail($employee_id);
+                    $employees->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The students are deleted successfully',
+                    'message' => 'The employees are deleted successfully',
                 ], 200);
             } else {
                 return response()->json([

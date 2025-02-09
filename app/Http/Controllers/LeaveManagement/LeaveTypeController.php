@@ -1,28 +1,28 @@
 <?php
 
-namespace App\Http\Controllers\Subjects;
+namespace App\Http\Controllers\LeaveTypes;
 
 use App\Http\Controllers\Controller;
-use App\Models\Subjects;
-use Carbon\Carbon;
-use Exception;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
-class SubjectsController extends Controller
+class LeaveTypeController extends Controller
 {
     /**
-     * Method allow to display list of all designations or single academic_name.
+     * Method allow to display list of all Leave Types.
      * @return JsonResponse
      * @throws Exception
      */
-    public function index()
+    public function index(): JsonResponse
     {
         try {
-            $details = Subjects::orderBy('id','DESC')->get();
+            $leave_types = LeaveType::orderBy('id','DESC')->get();
+            $leave_types_details = [];
+            foreach($leave_types as $leave_type){
+                $leave_types_details[] = $this->leaveTypesOverview($leave_type);
+            }
+
             return response()->json([
-                'data' => $details,
+                'data' => $leave_types_details,
                 'message' => 'Success',
             ], 200);
 
@@ -36,23 +36,31 @@ class SubjectsController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Designations.
+     * Method allow to store Leave Type.
      * @param Request $request
      * @return JsonResponse
      * @throws ValidationException
      */
-    public function store(Request $request)
+    public function store(Request $request): JsonResponse
     {
         try {
-            Subjects::insertGetId([
+            $request->validate([
+                'name' => 'required|string|unique:leave_types',
+                'description' => 'required',
+                'max_days' => 'required'
+            ]);
+            $leave_type_id = LeaveType::insertGetId([
                 'name' => $request->name,
-                'code' => $request->code,
+                'description' => $request->description,
+                'max_days' => $request->max_days,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
-
+            $leave_type = LeaveType::where('id',$leave_type_id)->first();
+            $leave_type_details = $this->leaveTypesOverview($leave_type);
             return response()->json([
+                'data' => $leave_type_details,
                 'status' => 'Success',
-                'message' => 'Name is added successfully',
+                'message' => 'Leave type added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -65,7 +73,29 @@ class SubjectsController extends Controller
     } // End Function
 
     /**
-     * Method allow to delete the particular academic_name.
+     * Method allow to show all the leaveTypesOverview.
+     * @param $vendor
+     * @return JsonResponse|array
+     */
+    public function vendorsOverview($leave_type): JsonResponse|array
+    {
+        $leave_type_array = [];
+        if(!empty($leave_type)){
+            $leave_type_array = [
+                'id' => $leave_type->id,
+                'name' => $leave_type->name,
+                'description' => $leave_type->address,
+                'max_days' => $leave_type->max_days,
+                'created_at' => $leave_type->created_at,
+                'updated_at' => $leave_type->updated_at,
+                'deleted_at' => $leave_type->deleted_at,
+            ];
+        }
+        return $leave_type_array;
+    }
+
+    /**
+     * Method allow to show the Leave Type.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -73,10 +103,11 @@ class SubjectsController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (Subjects::where('id',$id)->exists()){
-                $details = Subjects::where('id',$id)->first();
+            if (LeaveType::where('id',$id)->exists()){
+                $leave_type = LeaveType::where('id',$id)->first();
+                $query = $this->leaveTypesOverview($leave_type);
                 return response()->json([
-                    'data' => $details,
+                    'data' => $query,
                     'message' => 'Success',
                 ],200);
 
@@ -96,7 +127,7 @@ class SubjectsController extends Controller
     } // End Function
 
     /**
-     * Method allow to update the name of the particular academic_name.
+     * Method allow to update leave Types.
      * @param Request $request
      * @param $id
      * @return JsonResponse
@@ -105,25 +136,35 @@ class SubjectsController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            // Find the academic name by ID
-            $details = Subjects::find($id);
+            $leave_type = LeaveType::find($id);
 
-            if (!$details) {
+            if (!$leave_type) {
                 return response()->json([
                     'status' => 'No Content',
                     'message' => 'There is no relevant information for the selected query',
                 ], 404);
             }
 
+            // Validate the request
+            $request->validate([
+                'name' => ['required', 'string', Rule::unique('leave_types', 'name')->ignore($leave_type->id)],
+                'descrition' => 'required',
+            ]);
+
             // Update the academic name and save
-            $details->name = $request->name;
-            $details->code = $request->code;
-            $details->updated_at = Carbon::now()->format('Y-m-d H:i:s');
-            $details->save();
+            $leave_type->name = $request->name;
+            $leave_type->descrition = $request->descrition;
+            $leave_type->max_days = $request->max_days;
+            $leave_type->updated_at = Carbon::now()->format('Y-m-d H:i:s');
+            if($leave_type->save()){
+                $updated_leave_type = LeaveType::where('id',$id)->first();
+                $leave_type_details = $this->leaveTypesOverview($updated_leave_type);
+            }
 
             return response()->json([
+                'data' => $leave_type_details,
                 'status' => 'Success',
-                'message' => 'Subjects are updated successfully',
+                'message' => 'The Leave type updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -133,14 +174,14 @@ class SubjectsController extends Controller
         } catch (\Exception $exception) {
             return response()->json([
                 'status' => 'Error',
-                'message' => 'An error occurred while updating the name.',
+                'message' => 'An error occurred while updating the item.',
             ], 500);
         }
     } // End Function
 
 
     /**
-     * Method allow to soft delete the particular name.
+     * Method allow to soft delete the particular leave type.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -148,12 +189,12 @@ class SubjectsController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (Subjects::where('id',$id)->exists()){
-                Subjects::where('id',$id)->delete();
+            if (LeaveType::where('id',$id)->exists()){
+                LeaveType::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The subjects is deleted successfully',
+                    'message' => 'The Leave Type deleted successfully',
                 ],200);
 
             }else{
@@ -172,7 +213,7 @@ class SubjectsController extends Controller
     } // End Function
 
     /**
-     * Method allow to soft delete the set of designations.
+     * Method allow to soft delete the set of Leave types.
      * @param Request $request
      * @return JsonResponse
      * @throws Exception
@@ -180,20 +221,20 @@ class SubjectsController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->subject_ids)) {
-                foreach ($request->subject_ids as $subject_id) {
-                    $details = Subjects::findOrFail($subject_id);
-                    $details->delete();
+            if (!empty($request->leave_type_id)) {
+                foreach ($request->leave_type_id as $leave_type_id) {
+                    $leave_type = LeaveType::findOrFail($leave_type_id);
+                    $leave_type->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The subjects are deleted successfully',
+                    'message' => 'The leave types deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
                     'status' => 'Error',
-                    'message' => 'Please select at least one name to delete'
+                    'message' => 'Please select at least one leave type to delete'
                 ], 422);
             }
 

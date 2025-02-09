@@ -1,15 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\Students management;
+namespace App\Http\Controllers\StudentsManagement;
 
-use App\Models\EmployeeAttendence;
-use App\Models\StudentAttendence;
+use App\Models\Designations;
+use App\Models\StudentGrades;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Exception;
-class StudentAttendenceController extends Controller
+use App\Http\Controllers\Controller;
+class StudentGradesController extends Controller
 {
     /**
      * Method allow to display list of all designations or single academic_name.
@@ -19,7 +21,7 @@ class StudentAttendenceController extends Controller
     public function index()
     {
         try {
-            $details = StudentAttendence::orderBy('id','DESC')->get();
+            $details = StudentGrades::orderBy('id','DESC')->get();
             return response()->json([
                 'data' => $details,
                 'message' => 'Success',
@@ -35,7 +37,7 @@ class StudentAttendenceController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store or create the new Designations.
      * @param Request $request
      * @return JsonResponse
      * @throws ValidationException
@@ -43,16 +45,16 @@ class StudentAttendenceController extends Controller
     public function store(Request $request)
     {
         try {
-            StudentAttendence::insertGetId([
+             StudentGrades::insertGetId([
                 'student_id' => $request->student_id,
-                'date' => $request->date,
-                'status' => $request->status,
+                'academic_year' => $request->academic_year,
+                'year' => $request->year,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'attandence is added successfully',
+                'message' => 'Name is added successfully',
             ],200);
 
         } catch (ValidationException $exception)
@@ -73,8 +75,9 @@ class StudentAttendenceController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (StudentAttendence::where('id',$id)->exists()){
-                $details = StudentAttendence::where('id',$id)->first();
+            if (StudentGrades::where('id',$id)->exists()){
+                $details = StudentGrades::where('id',$id)->first();
+                // $query = $this->getMasterDataDetailsOverview($designation);
                 return response()->json([
                     'data' => $details,
                     'message' => 'Success',
@@ -106,7 +109,7 @@ class StudentAttendenceController extends Controller
     {
         try {
             // Find the academic name by ID
-            $details = StudentAttendence::find($id);
+            $details = StudentGrades::find($id);
 
             if (!$details) {
                 return response()->json([
@@ -117,14 +120,14 @@ class StudentAttendenceController extends Controller
 
             // Update the academic name and save
             $details->student_id = $request->student_id;
-            $details->date = $request->date;
-            $details->status = $request->status;
+            $details->academic_year = $request->academic_year;
+            $details->grade = $request->grade;
             $details->updated_at = Carbon::now()->format('Y-m-d H:i:s');
             $details->save();
 
             return response()->json([
                 'status' => 'Success',
-                'message' => 'student attendence has updated successfully',
+                'message' => 'Grades are updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -149,12 +152,12 @@ class StudentAttendenceController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (StudentAttendence::where('id',$id)->exists()){
-                StudentAttendence::where('id',$id)->delete();
+            if (StudentGrades::where('id',$id)->exists()){
+                StudentGrades::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The student attendence is deleted successfully',
+                    'message' => 'The grade is deleted successfully',
                 ],200);
 
             }else{
@@ -181,15 +184,15 @@ class StudentAttendenceController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->student_attendence_ids)) {
-                foreach ($request->student_attendence_ids as $student_attendence_id) {
-                    $details = StudentAttendence::findOrFail($student_attendence_id);
+            if (!empty($request->grade_ids)) {
+                foreach ($request->grade_ids as $grade_id) {
+                    $details = StudentGrades::findOrFail($grade_id);
                     $details->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The student attendence are deleted successfully',
+                    'message' => 'The grades are deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
@@ -206,4 +209,5 @@ class StudentAttendenceController extends Controller
             ], 500);
         }
     } // End Function
+
 }

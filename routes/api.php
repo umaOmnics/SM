@@ -1,7 +1,11 @@
 <?php
 
-//use Illuminate\Http\Request;
-//use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserAuth\LoginController;
+use App\Http\Controllers\Client\TokensController;
+use App\Http\Controllers\Client\SalutationsController;
+use App\Http\Controllers\Client\TitlesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,13 +22,6 @@
 //    return $request->user();
 //});
 
-
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserAuth\LoginController;
-use App\Http\Controllers\Client\TokensController;
-use App\Http\Controllers\Client\SalutationsController;
-use App\Http\Controllers\Client\TitlesController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -43,7 +40,17 @@ require __DIR__ . '/api/v1/studentGrades.php';
 require __DIR__ . '/api/v1/subjectFaculties.php';
 require __DIR__ . '/api/v1/studentAttendence.php';
 require __DIR__ . '/api/v1/employeesAttendence.php';
-
+require __DIR__ . '/api/v1/allowances.php';
+require __DIR__ . '/api/v1/employeeLeaves.php';
+require __DIR__ . '/api/v1/leaveTypes.php';
+require __DIR__ . '/api/v1/vendors.php';
+require __DIR__ . '/api/v1/items.php';
+require __DIR__ . '/api/v1/itemOrderDetails.php';
+require __DIR__ . '/api/v1/inventoryStocks.php';
+require __DIR__ . '/api/v1/institutes.php';
+require __DIR__ . '/api/v1/employeePromotions.php';
+require __DIR__ . '/api/v1/resignations.php';
+require __DIR__ . '/api/v1/hrevents.php';
 
 //Client APIs..
 

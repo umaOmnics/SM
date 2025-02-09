@@ -66,7 +66,7 @@ class InstitutesController extends Controller
         return $result;
     }
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store or create the new Designations.
      * @param Request $request
      * @param $id
      * @return JsonResponse

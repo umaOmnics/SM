@@ -1,34 +1,34 @@
 <?php
 
-namespace App\Http\Controllers\Vendors;
+namespace App\Http\Controllers\Allowances;
 
 use App\Http\Controllers\Controller;
-use Exception;
-use Illuminate\Http\Request;
-use App\Models\Vendor;
+use App\Models\Allowances;
 use Carbon\Carbon;
-use Illuminate\Validation\Rule;
+use Exception;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
-class VendorController extends Controller
+class AllowancesController extends Controller
 {
     /**
-     * Method allow to display list of all Vendors.
+     * Method allow to display list of all Allowances.
      * @return JsonResponse
      * @throws Exception
      */
     public function index(): JsonResponse
     {
         try {
-            $vendors = Vendor::orderBy('id','DESC')->get();
-            $vendors_details = [];
-            foreach($vendors as $vendor){
-                $vendors_details[] = $this->vendorsOverview($vendor);
+            $allowances = Allowances::orderBy('id','DESC')->get();
+            $allowance_details = [];
+            foreach($allowances as $allowance){
+                $allowance_details[] = $this->allowanceOverview($allowance);
             }
 
             return response()->json([
-                'data' => $vendors_details,
+                'data' => $allowance_details,
                 'message' => 'Success',
             ], 200);
 
@@ -51,16 +51,18 @@ class VendorController extends Controller
     {
         try {
             $request->validate([
-                'name' => 'required|string|unique:vendors'
+                'allowance' => 'required|string|unique:allowances',
+                'description' => 'required'
             ]);
-            $vendor_id = Vendor::insertGetId([
-                'name' => $request->name,
+            $allowance_id = Allowances::insertGetId([
+                'allowance' => $request->allowance,
+                'description' => $request->description,
                 'created_at' => Carbon::now()->format('Y-m-d H:i:s'),
             ]);
-            $vendor = Vendor::where('id',$vendor_id)->first();
-            $vendor_details = $this->vendorsOverview($vendor);
+            $allowance = Allowances::where('id',$allowance_id)->first();
+            $allowance_details = $this->allowanceOverview($allowance);
             return response()->json([
-                'data' => $vendor_details,
+                'data' => $allowance_details,
                 'status' => 'Success',
                 'message' => 'Item added successfully',
             ],200);
@@ -75,29 +77,28 @@ class VendorController extends Controller
     } // End Function
 
     /**
-     * Method allow to show all the Vendors overview.
-     * @param $vendor
+     * Method allow to show all the Allowancess overview.
+     * @param $allowance
      * @return JsonResponse|array
      */
-    public function vendorsOverview($vendor): JsonResponse|array
+    public function allowanceOverview($allowance): JsonResponse|array
     {
-        $vendor_array = [];
-        if(!empty($vendor)){
-            $vendor_array = [
-                'id' => $vendor->id,
-                'name' => $vendor->name,
-                'address' => $vendor->address,
-                'email' => $vendor->email,
-                'phone_number' => $vendor->phone_number,
-                'created_at' => $vendor->created_at,
-                'updated_at' => $vendor->updated_at
+        $allowance_array = [];
+        if(!empty($allowance)){
+            $allowance_array = [
+                'id' => $allowance->id,
+                'allowance' => $allowance->allowance,
+                'description' => $allowance->description,
+                'created_at' => $allowance->created_at,
+                'updated_at' => $allowance->updated_at,
+                'deleted_at' => $allowance->deleted_at
             ];
         }
-        return $vendor_array;
+        return $allowance_array;
     }
 
     /**
-     * Method allow to show the item details.
+     * Method allow to show the allowance.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -105,9 +106,9 @@ class VendorController extends Controller
     public function show($id):JsonResponse
     {
         try {
-            if (Vendor::where('id',$id)->exists()){
-                $vendor = Vendor::where('id',$id)->first();
-                $query = $this->vendorsOverview($vendor);
+            if (Allowances::where('id',$id)->exists()){
+                $allowance = Allowances::where('id',$id)->first();
+                $query = $this->allowanceOverview($allowance);
                 return response()->json([
                     'data' => $query,
                     'message' => 'Success',
@@ -129,7 +130,7 @@ class VendorController extends Controller
     } // End Function
 
     /**
-     * Method allow to update Vendor.
+     * Method allow to update Allowances.
      * @param Request $request
      * @param $id
      * @return JsonResponse
@@ -138,9 +139,9 @@ class VendorController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         try {
-            $vendor = Vendor::find($id);
+            $allowance = Allowances::find($id);
 
-            if (!$vendor) {
+            if (!$allowance) {
                 return response()->json([
                     'status' => 'No Content',
                     'message' => 'There is no relevant information for the selected query',
@@ -149,24 +150,23 @@ class VendorController extends Controller
 
             // Validate the request
             $request->validate([
-                'name' => ['required', 'string', Rule::unique('vendors', 'name')->ignore($vendor->id)],
+                'allowance' => ['required', 'string', Rule::unique('allowances', 'allowance')->ignore($allowance->id)],
+                'description' => 'required'
             ]);
 
-            // Update the academic name and save
-            $vendor->name = $request->name;
-            $vendor->address = $request->address;
-            $vendor->email = $request->email;
-            $vendor->phone_number = $request->phone_number;
-            $vendor->updated_at = Carbon::now()->format('Y-m-d H:i:s');
-            if($vendor->save()){
-                $updated_vendor = Vendor::where('id',$id)->first();
-                $vendor_details = $this->vendorsOverview($updated_vendor);
+            // Update the academic allowance and save
+            $allowance->allowance = $request->allowance;
+            $allowance->description = $request->description;
+            $allowance->updated_at = Carbon::now()->format('Y-m-d H:i:s');
+            if($allowance->save()){
+                $updated_allowance = Allowances::where('id',$id)->first();
+                $allowance_details = $this->allowanceOverview($updated_allowance);
             }
 
             return response()->json([
-                'data' => $vendor_details,
+                'data' => $allowance_details,
                 'status' => 'Success',
-                'message' => 'The vendor updated successfully',
+                'message' => 'The allowance updated successfully',
             ], 200);
         } catch (ValidationException $exception) {
             return response()->json([
@@ -183,7 +183,7 @@ class VendorController extends Controller
 
 
     /**
-     * Method allow to soft delete the particular vendor.
+     * Method allow to soft delete the particular allowance.
      * @param $id
      * @return JsonResponse
      * @throws Exception
@@ -191,12 +191,12 @@ class VendorController extends Controller
     public function destroy($id):JsonResponse
     {
         try {
-            if (Vendor::where('id',$id)->exists()){
-                Vendor::where('id',$id)->delete();
+            if (Allowances::where('id',$id)->exists()){
+                Allowances::where('id',$id)->delete();
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The vendor deleted successfully',
+                    'message' => 'The allowance deleted successfully',
                 ],200);
 
             }else{
@@ -223,15 +223,15 @@ class VendorController extends Controller
     public function massDelete(Request $request):JsonResponse
     {
         try {
-            if (!empty($request->vendor_id)) {
-                foreach ($request->vendor_id as $vendor_id) {
-                    $vendor = Vendor::findOrFail($vendor_id);
-                    $vendor->delete();
+            if (!empty($request->allowance_id)) {
+                foreach ($request->allowance_id as $allowance_id) {
+                    $allowance = Allowances::findOrFail($allowance_id);
+                    $allowance->delete();
                 }
 
                 return response()->json([
                     'status' => 'Success',
-                    'message' => 'The vendors deleted successfully',
+                    'message' => 'The allowances deleted successfully',
                 ], 200);
             } else {
                 return response()->json([
@@ -248,5 +248,4 @@ class VendorController extends Controller
             ], 500);
         }
     } // End Function
-
 }

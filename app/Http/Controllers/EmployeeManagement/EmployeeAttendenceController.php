@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Employee management;
+namespace App\Http\Controllers\EmployeeManagement;
 
 use App\Models\EmployeeAttendence;
 use App\Models\StudentGrades;
@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Exception;
+use App\Http\Controllers\Controller;
 class EmployeeAttendenceController extends Controller
 {
     /**
@@ -35,7 +36,7 @@ class EmployeeAttendenceController extends Controller
     } // End Function
 
     /**
-     * Method allow to store or create the new Designation.
+     * Method allow to store or create the new Designations.
      * @param Request $request
      * @return JsonResponse
      * @throws ValidationException

@@ -22,7 +22,7 @@ class ResourcesSeeder extends Seeder
             'slug' => 'roles-and-permissions',
         ]);
         DB::table('resources')->insert([
-            'name' => 'Students management',
+            'name' => 'StudentsManagement',
             'slug' => 'students',
         ]);
         DB::table('resources')->insert([
